@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CV - Kisra Maroua</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         /* Styles généraux */
         * {
@@ -96,13 +97,14 @@
             border: 5px solid rgba(255,255,255,0.3);
             margin-bottom: 20px;
             object-fit: cover;
-            background-color: #ecf0f1;
+            background: linear-gradient(135deg, #3498db, #2c3e50);
             display: flex;
             align-items: center;
             justify-content: center;
             margin: 0 auto 20px;
-            color: #7f8c8d;
+            color: white;
             font-size: 4rem;
+            font-weight: bold;
         }
         
         h1 {
@@ -576,6 +578,30 @@
             color: #7f8c8d;
         }
         
+        /* Langue selector */
+        .lang-selector {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 100;
+        }
+        
+        .lang-btn {
+            background: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .lang-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        
         /* Pied de page */
         footer {
             text-align: center;
@@ -625,13 +651,26 @@
             .matieres-grid, .tp-list, .projects-grid {
                 grid-template-columns: 1fr;
             }
+            
+            .lang-selector {
+                position: static;
+                text-align: center;
+                margin-bottom: 20px;
+            }
         }
     </style>
 </head>
 <body>
+    <div class="lang-selector">
+        <button class="lang-btn" id="langFr">FR</button>
+        <button class="lang-btn" id="langAr">AR</button>
+    </div>
+    
     <header>
         <div class="container">
-            <img src="mm.jpg" alt="Photo de profil" class="profile-img">
+            <div class="profile-img">
+                <span>KM</span>
+            </div>
             <h1>Kisra Maroua</h1>
             <p class="title">Étudiante en Master 2 - Ingénierie de Données et Technologies Web</p>
             <p>Passionnée par le développement web et les technologies émergentes</p>
@@ -966,21 +1005,12 @@
                 <div class="project-card">
                     <div class="project-img">🏥</div>
                     <div class="project-content">
-                        <span class="project-status status-completed">Terminé</span>
                         <h3>Plateforme Médicale - Medical Care</h3>
                         <p>Site web complet pour la gestion des rendez-vous médicaux avec interface patient et médecin.</p>
-                        <div class="project-tech">
-                            <span class="tech-tag">HTML5</span>
-                            <span class="tech-tag">CSS3</span>
-                            <span class="tech-tag">JavaScript</span>
-                            <span class="tech-tag">PHP</span>
-                            <span class="tech-tag">MySQL</span>
-                        </div>
+                        <p><strong>Technologies:</strong> HTML5, CSS3, JavaScript, PHP, MySQL</p>
                         <p><strong>Fonctionnalités:</strong> Prise de rendez-vous en ligne, gestion des patients, espace médecin sécurisé, recherche de services médicaux</p>
-                
                     </div>
-                
-            
+                </div>
             </div>
         </section>
         
@@ -1464,6 +1494,22 @@
                 card.style.transform = 'translateY(20px)';
                 card.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
                 observer.observe(card);
+            });
+            
+            // Gestion du sélecteur اللغة
+            const langFr = document.getElementById('langFr');
+            const langAr = document.getElementById('langAr');
+            
+            langFr.addEventListener('click', function() {
+                document.documentElement.lang = 'fr';
+                // يمكن إضافة ترجمة للغة الفرنسية هنا
+                alert('الموقع باللغة الفرنسية');
+            });
+            
+            langAr.addEventListener('click', function() {
+                document.documentElement.lang = 'ar';
+                // يمكن إضافة ترجمة للغة العربية هنا
+                alert('الموقع باللغة العربية');
             });
         });
         
