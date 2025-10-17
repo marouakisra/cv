@@ -4,8 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CV - Kisra Maroua</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <style>
-        /* Styles généraux */
+        /* جميع الأنماط السابقة تبقى كما هي */
         * {
             margin: 0;
             padding: 0;
@@ -96,13 +99,14 @@
             border: 5px solid rgba(255,255,255,0.3);
             margin-bottom: 20px;
             object-fit: cover;
-            background-color: #ecf0f1;
+            background: linear-gradient(135deg, #3498db, #2c3e50);
             display: flex;
             align-items: center;
             justify-content: center;
             margin: 0 auto 20px;
-            color: #7f8c8d;
+            color: white;
             font-size: 4rem;
+            font-weight: bold;
         }
         
         h1 {
@@ -576,6 +580,45 @@
             color: #7f8c8d;
         }
         
+        /* Langue selector */
+        .lang-selector {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 100;
+        }
+        
+        .lang-btn {
+            background: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .lang-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        
+        /* Loading spinner */
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
         /* Pied de page */
         footer {
             text-align: center;
@@ -625,10 +668,21 @@
             .matieres-grid, .tp-list, .projects-grid {
                 grid-template-columns: 1fr;
             }
+            
+            .lang-selector {
+                position: static;
+                text-align: center;
+                margin-bottom: 20px;
+            }
         }
     </style>
 </head>
 <body>
+    <div class="lang-selector">
+        <button class="lang-btn" id="langFr">FR</button>
+        <button class="lang-btn" id="langAr">AR</button>
+    </div>
+    
     <header>
         <div class="container">
             <img src="mm.jpg" alt="Photo de profil" class="profile-img">
@@ -810,7 +864,7 @@
         
         <section id="tp" class="content-section">
             <h2>Travaux Pratiques</h2>
-            <p>Cette section me permet de suivre mes travaux pratiques et projets académiques.</p>
+            <p>Cette section permet de gérer les travaux pratiques. Tous les utilisateurs voient la même liste de TP car ils sont stockés dans une base de données en ligne.</p>
             
             <div class="tp-container">
                 <div class="tp-form">
@@ -870,6 +924,7 @@
                 
                 <div class="tp-list-container">
                     <h3>Mes Travaux Pratiques</h3>
+                    <div id="loadingSpinner" class="spinner" style="display: none;"></div>
                     <div class="tp-list" id="tpList">
                         <!-- Les TP seront ajoutés ici dynamiquement -->
                     </div>
@@ -966,21 +1021,12 @@
                 <div class="project-card">
                     <div class="project-img">🏥</div>
                     <div class="project-content">
-                        <span class="project-status status-completed">Terminé</span>
                         <h3>Plateforme Médicale - Medical Care</h3>
                         <p>Site web complet pour la gestion des rendez-vous médicaux avec interface patient et médecin.</p>
-                        <div class="project-tech">
-                            <span class="tech-tag">HTML5</span>
-                            <span class="tech-tag">CSS3</span>
-                            <span class="tech-tag">JavaScript</span>
-                            <span class="tech-tag">PHP</span>
-                            <span class="tech-tag">MySQL</span>
-                        </div>
+                        <p><strong>Technologies:</strong> HTML5, CSS3, JavaScript, PHP, MySQL</p>
                         <p><strong>Fonctionnalités:</strong> Prise de rendez-vous en ligne, gestion des patients, espace médecin sécurisé, recherche de services médicaux</p>
-                
                     </div>
-                
-            
+                </div>
             </div>
         </section>
         
@@ -1045,6 +1091,20 @@
     </footer>
 
     <script>
+        // تكوين Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyC4RXeJdRwKXq5Q8Q3eQ5q9XwV8mZz8X8X8",
+            authDomain: "kisra-maroua-cv.firebaseapp.com",
+            projectId: "kisra-maroua-cv",
+            storageBucket: "kisra-maroua-cv.appspot.com",
+            messagingSenderId: "123456789012",
+            appId: "1:123456789012:web:abcdef123456"
+        };
+
+        // تهيئة Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
         // Données des matières (pour le modal)
         const matieresData = {
             "algo": {
@@ -1313,13 +1373,13 @@
                 return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
             }
             
-            // Gestion du formulaire TP
+            // Gestion du formulaire TP avec Firebase
             const tpForm = document.getElementById('tpForm');
             const tpList = document.getElementById('tpList');
+            const loadingSpinner = document.getElementById('loadingSpinner');
             
-            // Charger les TPs depuis le localStorage
-            let tps = JSON.parse(localStorage.getItem('tps')) || [];
-            renderTps();
+            // Charger les TPs depuis Firebase
+            loadTps();
             
             tpForm.addEventListener('submit', function(e) {
                 e.preventDefault();
@@ -1352,26 +1412,32 @@
                 Promise.all(selectedFiles.map(fileToBase64))
                     .then(files => {
                         const nouveauTp = {
-                            id: Date.now(),
                             matiere,
                             titre,
                             description,
                             date,
                             statut,
-                            files: files
+                            files: files,
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
                         };
                         
-                        tps.push(nouveauTp);
-                        localStorage.setItem('tps', JSON.stringify(tps));
-                        renderTps();
-                        
-                        // Réinitialiser le formulaire
-                        tpForm.reset();
-                        selectedFiles = [];
-                        updateFilePreview();
-                        
-                        // Afficher un message de confirmation
-                        alert('TP ajouté avec succès!');
+                        // إضافة TP إلى قاعدة البيانات
+                        db.collection('tps').add(nouveauTp)
+                            .then((docRef) => {
+                                console.log("TP ajouté avec ID: ", docRef.id);
+                                
+                                // Réinitialiser le formulaire
+                                tpForm.reset();
+                                selectedFiles = [];
+                                updateFilePreview();
+                                
+                                // Afficher un message de confirmation
+                                alert('TP ajouté avec succès!');
+                            })
+                            .catch((error) => {
+                                console.error("Erreur lors de l'ajout du TP: ", error);
+                                alert('Erreur lors de l\'ajout du TP');
+                            });
                     })
                     .catch(error => {
                         console.error('Erreur lors de la conversion des fichiers:', error);
@@ -1379,53 +1445,73 @@
                     });
             });
             
-            function renderTps() {
+            function loadTps() {
+                loadingSpinner.style.display = 'block';
                 tpList.innerHTML = '';
                 
-                if (tps.length === 0) {
-                    tpList.innerHTML = '<p>Aucun TP enregistré pour le moment.</p>';
-                    return;
-                }
-                
-                // Trier les TPs par date (du plus récent au plus ancien)
-                tps.sort((a, b) => new Date(b.date) - new Date(a.date));
-                
-                tps.forEach(tp => {
-                    const tpCard = document.createElement('div');
-                    tpCard.className = 'tp-card';
-                    
-                    let filesHtml = '';
-                    if (tp.files && tp.files.length > 0) {
-                        filesHtml = '<div class="tp-files"><strong>Fichiers:</strong><br>';
-                        tp.files.forEach(file => {
-                            filesHtml += `<span class="file-badge" data-file='${JSON.stringify(file)}'>${file.name}</span>`;
+                db.collection('tps')
+                    .orderBy('createdAt', 'desc')
+                    .get()
+                    .then((querySnapshot) => {
+                        loadingSpinner.style.display = 'none';
+                        
+                        if (querySnapshot.empty) {
+                            tpList.innerHTML = '<p>Aucun TP enregistré pour le moment.</p>';
+                            return;
+                        }
+                        
+                        querySnapshot.forEach((doc) => {
+                            const tp = doc.data();
+                            const tpId = doc.id;
+                            
+                            const tpCard = document.createElement('div');
+                            tpCard.className = 'tp-card';
+                            
+                            let filesHtml = '';
+                            if (tp.files && tp.files.length > 0) {
+                                filesHtml = '<div class="tp-files"><strong>Fichiers:</strong><br>';
+                                tp.files.forEach(file => {
+                                    filesHtml += `<span class="file-badge" data-file='${JSON.stringify(file)}'>${file.name}</span>`;
+                                });
+                                filesHtml += '</div>';
+                            }
+                            
+                            tpCard.innerHTML = `
+                                <h4>${tp.titre}</h4>
+                                <p><strong>Matière:</strong> ${tp.matiere}</p>
+                                <p><strong>Date:</strong> ${new Date(tp.date).toLocaleDateString('fr-FR')}</p>
+                                <p><strong>Statut:</strong> <span class="statut-${tp.statut.replace(' ', '-').toLowerCase()}">${tp.statut}</span></p>
+                                <p>${tp.description}</p>
+                                ${filesHtml}
+                                <div class="tp-actions">
+                                    <button class="btn btn-success" onclick="downloadTpFiles('${tpId}')">Télécharger les fichiers</button>
+                                    <button class="btn btn-danger" onclick="deleteTp('${tpId}')">Supprimer</button>
+                                </div>
+                            `;
+                            tpList.appendChild(tpCard);
                         });
-                        filesHtml += '</div>';
-                    }
-                    
-                    tpCard.innerHTML = `
-                        <h4>${tp.titre}</h4>
-                        <p><strong>Matière:</strong> ${tp.matiere}</p>
-                        <p><strong>Date:</strong> ${new Date(tp.date).toLocaleDateString('fr-FR')}</p>
-                        <p><strong>Statut:</strong> <span class="statut-${tp.statut.replace(' ', '-').toLowerCase()}">${tp.statut}</span></p>
-                        <p>${tp.description}</p>
-                        ${filesHtml}
-                        <div class="tp-actions">
-                            <button class="btn btn-success" onclick="downloadTpFiles(${tp.id})">Télécharger les fichiers</button>
-                            <button class="btn btn-danger" onclick="deleteTp(${tp.id})">Supprimer</button>
-                        </div>
-                    `;
-                    tpList.appendChild(tpCard);
-                });
-                
-                // Ajouter des événements aux badges de fichiers
-                document.querySelectorAll('.file-badge').forEach(badge => {
-                    badge.addEventListener('click', function() {
-                        const fileData = JSON.parse(this.getAttribute('data-file'));
-                        downloadFile(fileData);
+                        
+                        // Ajouter des événements aux badges de fichiers
+                        document.querySelectorAll('.file-badge').forEach(badge => {
+                            badge.addEventListener('click', function() {
+                                const fileData = JSON.parse(this.getAttribute('data-file'));
+                                downloadFile(fileData);
+                            });
+                        });
+                    })
+                    .catch((error) => {
+                        loadingSpinner.style.display = 'none';
+                        console.error("Erreur lors du chargement des TPs: ", error);
+                        tpList.innerHTML = '<p>Erreur lors du chargement des TPs. Veuillez réessayer.</p>';
                     });
-                });
             }
+            
+            // Écouter les changements en temps réel
+            db.collection('tps')
+                .orderBy('createdAt', 'desc')
+                .onSnapshot((querySnapshot) => {
+                    loadTps(); // Recharger les TPs à chaque changement
+                });
             
             // Animation des éléments de timeline au défilement
             const observerOptions = {
@@ -1465,6 +1551,22 @@
                 card.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
                 observer.observe(card);
             });
+            
+            // Gestion du sélecteur اللغة
+            const langFr = document.getElementById('langFr');
+            const langAr = document.getElementById('langAr');
+            
+            langFr.addEventListener('click', function() {
+                document.documentElement.lang = 'fr';
+                // يمكن إضافة ترجمة للغة الفرنسية هنا
+                alert('الموقع باللغة الفرنسية');
+            });
+            
+            langAr.addEventListener('click', function() {
+                document.documentElement.lang = 'ar';
+                // يمكن إضافة ترجمة للغة العربية هنا
+                alert('الموقع باللغة العربية');
+            });
         });
         
         // Fonction pour télécharger un fichier individuel
@@ -1480,68 +1582,40 @@
         // Fonction pour supprimer un TP (doit être globale)
         function deleteTp(id) {
             if (confirm('Êtes-vous sûr de vouloir supprimer ce TP?')) {
-                let tps = JSON.parse(localStorage.getItem('tps')) || [];
-                tps = tps.filter(tp => tp.id !== id);
-                localStorage.setItem('tps', JSON.stringify(tps));
-                
-                // Re-render la liste
-                document.getElementById('tpList').innerHTML = '';
-                if (tps.length === 0) {
-                    document.getElementById('tpList').innerHTML = '<p>Aucun TP enregistré pour le moment.</p>';
-                } else {
-                    tps.forEach(tp => {
-                        const tpCard = document.createElement('div');
-                        tpCard.className = 'tp-card';
-                        
-                        let filesHtml = '';
-                        if (tp.files && tp.files.length > 0) {
-                            filesHtml = '<div class="tp-files"><strong>Fichiers:</strong><br>';
-                            tp.files.forEach(file => {
-                                filesHtml += `<span class="file-badge" data-file='${JSON.stringify(file)}'>${file.name}</span>`;
-                            });
-                            filesHtml += '</div>';
-                        }
-                        
-                        tpCard.innerHTML = `
-                            <h4>${tp.titre}</h4>
-                            <p><strong>Matière:</strong> ${tp.matiere}</p>
-                            <p><strong>Date:</strong> ${new Date(tp.date).toLocaleDateString('fr-FR')}</p>
-                            <p><strong>Statut:</strong> <span class="statut-${tp.statut.replace(' ', '-').toLowerCase()}">${tp.statut}</span></p>
-                            <p>${tp.description}</p>
-                            ${filesHtml}
-                            <div class="tp-actions">
-                                <button class="btn btn-success" onclick="downloadTpFiles(${tp.id})">Télécharger les fichiers</button>
-                                <button class="btn btn-danger" onclick="deleteTp(${tp.id})">Supprimer</button>
-                            </div>
-                        `;
-                        document.getElementById('tpList').appendChild(tpCard);
+                db.collection('tps').doc(id).delete()
+                    .then(() => {
+                        console.log("TP supprimé avec succès");
+                    })
+                    .catch((error) => {
+                        console.error("Erreur lors de la suppression du TP: ", error);
+                        alert('Erreur lors de la suppression du TP');
                     });
-                    
-                    // Réattacher les événements aux badges de fichiers
-                    document.querySelectorAll('.file-badge').forEach(badge => {
-                        badge.addEventListener('click', function() {
-                            const fileData = JSON.parse(this.getAttribute('data-file'));
-                            downloadFile(fileData);
-                        });
-                    });
-                }
             }
         }
         
         // Fonction pour télécharger les fichiers d'un TP
         function downloadTpFiles(tpId) {
-            const tps = JSON.parse(localStorage.getItem('tps')) || [];
-            const tp = tps.find(t => t.id === tpId);
-            
-            if (!tp || !tp.files || tp.files.length === 0) {
-                alert('Aucun fichier à télécharger pour ce TP');
-                return;
-            }
-            
-            // Télécharger chaque fichier
-            tp.files.forEach(file => {
-                downloadFile(file);
-            });
+            db.collection('tps').doc(tpId).get()
+                .then((doc) => {
+                    if (doc.exists) {
+                        const tp = doc.data();
+                        if (!tp.files || tp.files.length === 0) {
+                            alert('Aucun fichier à télécharger pour ce TP');
+                            return;
+                        }
+                        
+                        // Télécharger chaque fichier
+                        tp.files.forEach(file => {
+                            downloadFile(file);
+                        });
+                    } else {
+                        alert('TP non trouvé');
+                    }
+                })
+                .catch((error) => {
+                    console.error("Erreur lors de la récupération du TP: ", error);
+                    alert('Erreur lors de la récupération du TP');
+                });
         }
     </script>
 </body>
